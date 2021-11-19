@@ -1,0 +1,64 @@
+"""Sample code to explain how we can execute a function after sending API response"""
+
+
+urls.py
+------
+from django.urls import path
+from .views import SampleView
+
+urlpatterns = [
+    path('sample-code/', SampleView.as_view())
+    ]
+
+views.py
+--------
+from rest_framework.response import Response
+from rest_framework import status, generics
+
+
+def response_success_data(data, message):
+    """Function to send response data if status is success"""
+
+    response_data = {}
+    response_data['status_code'] = status.HTTP_200_OK
+    response_data['message'] = message
+    response_data['data'] = data
+    return response_data
+
+
+def after_response(param1, param2):
+    """Function to execute after sending API response"""
+
+    pass
+
+
+class ResponseThen(Response):
+    """
+    Class which handles calling function after sending response
+    """
+
+    def __init__(self, data, then_callback, param1, param2, **kwargs):
+        super().__init__(data, **kwargs)
+        self.then_callback = then_callback
+        self.param1 = param1
+        self.param2 = param2
+
+    def close(self):
+        super().close()
+        if self.status_code == 200:
+            print('HttpResponse successful: %s' % self.status_code)
+        after_response(param1, param2)  # After close method after_response function is called
+
+
+class SampleView(generics.GenericAPIView):
+    """Class which sends API response"""
+
+    serializer_class = SampleSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request, *args, **kwargs):
+        print("List all details")
+        return ResponseThen(response_success_data(data, message),
+                                after_response, param1,
+                                param1, status=status.HTTP_200_OK)
+        
